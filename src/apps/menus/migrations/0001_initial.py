@@ -1,0 +1,181 @@
+import django.db.models.deletion
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+    initial = True
+
+    dependencies = []
+
+    operations = [
+        migrations.CreateModel(
+            name="StandardMenu",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("name", models.CharField(max_length=200, unique=True, verbose_name="표준 메뉴명")),
+                (
+                    "normalized_name",
+                    models.CharField(db_index=True, max_length=200, verbose_name="정규화된 메뉴명"),
+                ),
+                ("category", models.CharField(blank=True, max_length=100, verbose_name="카테고리")),
+                ("description", models.TextField(blank=True, verbose_name="설명")),
+                ("match_count", models.IntegerField(default=0, verbose_name="매칭 횟수")),
+                ("is_active", models.BooleanField(default=True, verbose_name="활성화 여부")),
+                ("created_at", models.DateTimeField(auto_now_add=True, verbose_name="생성일시")),
+                ("updated_at", models.DateTimeField(auto_now=True, verbose_name="수정일시")),
+            ],
+            options={
+                "verbose_name": "표준 메뉴",
+                "verbose_name_plural": "표준 메뉴 목록",
+                "db_table": "standard_menus",
+                "ordering": ["-match_count", "name"],
+                "indexes": [
+                    models.Index(fields=["normalized_name"], name="standard_me_normali_cf2d46_idx"),
+                    models.Index(fields=["-match_count"], name="standard_me_match_c_e8e1f3_idx"),
+                    models.Index(
+                        fields=["is_active", "-match_count"], name="standard_me_is_acti_5336e5_idx"
+                    ),
+                ],
+            },
+        ),
+        migrations.CreateModel(
+            name="Menu",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("original_name", models.CharField(max_length=300, verbose_name="원본 메뉴명")),
+                (
+                    "normalized_name",
+                    models.CharField(db_index=True, max_length=300, verbose_name="정규화된 메뉴명"),
+                ),
+                (
+                    "restaurant_id",
+                    models.CharField(db_index=True, max_length=100, verbose_name="음식점 ID"),
+                ),
+                ("price", models.IntegerField(blank=True, null=True, verbose_name="가격")),
+                ("description", models.TextField(blank=True, verbose_name="메뉴 설명")),
+                (
+                    "match_confidence",
+                    models.FloatField(blank=True, null=True, verbose_name="매칭 신뢰도 (0-1)"),
+                ),
+                (
+                    "match_method",
+                    models.CharField(
+                        choices=[
+                            ("exact", "정확 일치"),
+                            ("mecab", "형태소 분석"),
+                            ("fasttext", "FastText"),
+                            ("manual", "수동 매칭"),
+                        ],
+                        default="mecab",
+                        max_length=50,
+                        verbose_name="매칭 방법",
+                    ),
+                ),
+                ("is_verified", models.BooleanField(default=False, verbose_name="검증 여부")),
+                ("created_at", models.DateTimeField(auto_now_add=True, verbose_name="생성일시")),
+                ("updated_at", models.DateTimeField(auto_now=True, verbose_name="수정일시")),
+                (
+                    "standard_menu",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="menus",
+                        to="menus.standardmenu",
+                        verbose_name="표준 메뉴",
+                    ),
+                ),
+            ],
+            options={
+                "verbose_name": "메뉴",
+                "verbose_name_plural": "메뉴 목록",
+                "db_table": "menus",
+                "ordering": ["-created_at"],
+            },
+        ),
+        migrations.CreateModel(
+            name="MenuMatchingHistory",
+            fields=[
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
+                    ),
+                ),
+                ("confidence_score", models.FloatField(verbose_name="신뢰도 점수")),
+                ("match_method", models.CharField(max_length=50, verbose_name="매칭 방법")),
+                ("matched_tokens", models.JSONField(default=list, verbose_name="매칭된 토큰")),
+                ("created_at", models.DateTimeField(auto_now_add=True, verbose_name="생성일시")),
+                (
+                    "menu",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="matching_histories",
+                        to="menus.menu",
+                        verbose_name="메뉴",
+                    ),
+                ),
+                (
+                    "standard_menu",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="matching_histories",
+                        to="menus.standardmenu",
+                        verbose_name="표준 메뉴",
+                    ),
+                ),
+            ],
+            options={
+                "verbose_name": "메뉴 매칭 이력",
+                "verbose_name_plural": "메뉴 매칭 이력 목록",
+                "db_table": "menu_matching_histories",
+                "ordering": ["-created_at"],
+                "indexes": [
+                    models.Index(
+                        fields=["menu", "-created_at"], name="menu_matchi_menu_id_85c714_idx"
+                    ),
+                    models.Index(
+                        fields=["standard_menu", "-created_at"],
+                        name="menu_matchi_standar_e6951a_idx",
+                    ),
+                    models.Index(
+                        fields=["-confidence_score"], name="menu_matchi_confide_13a070_idx"
+                    ),
+                ],
+            },
+        ),
+        migrations.AddIndex(
+            model_name="menu",
+            index=models.Index(
+                fields=["restaurant_id", "-created_at"], name="menus_restaur_80b5be_idx"
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="menu",
+            index=models.Index(fields=["normalized_name"], name="menus_normali_8be3c3_idx"),
+        ),
+        migrations.AddIndex(
+            model_name="menu",
+            index=models.Index(
+                fields=["standard_menu", "-created_at"], name="menus_standar_47b2cc_idx"
+            ),
+        ),
+        migrations.AddIndex(
+            model_name="menu",
+            index=models.Index(fields=["is_verified"], name="menus_is_veri_126d1d_idx"),
+        ),
+        migrations.AlterUniqueTogether(
+            name="menu",
+            unique_together={("restaurant_id", "original_name")},
+        ),
+    ]

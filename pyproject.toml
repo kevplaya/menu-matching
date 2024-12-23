@@ -1,0 +1,66 @@
+[tool.poetry]
+name = "menu-matching"
+version = "0.1.0"
+description = "Standard Menu Matching Service - A Django-based microservice for standardizing and matching restaurant menus"
+authors = ["Jihoon Lee <jihoon.lee@menu-matching.com>"]
+readme = "README.md"
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+django = "4.2.17"
+djangorestframework = "3.15.1"
+mysqlclient = "2.2.6"
+mecab-python3 = "1.0.9"
+fasttext = "^0.9"
+numpy = "^1.24"
+scikit-learn = "1.6.0"
+python-dotenv = "1.0.1"
+django-cors-headers = "4.6.0"
+drf-spectacular = "^0.27"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4"
+pytest-django = "^4.7"
+pytest-cov = "^4.1"
+black = "^23.12"
+isort = "^5.13"
+flake8 = "^7.0"
+pre-commit = "^3.6"
+ipython = "^8.18"
+django-extensions = "^3.2"
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+  | migrations
+)/
+'''
+
+[tool.isort]
+profile = "black"
+line_length = 100
+skip_glob = ["*/migrations/*"]
+known_django = ["django"]
+sections = ["FUTURE", "STDLIB", "DJANGO", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["tests.py", "test_*.py", "*_test.py"]
+addopts = "--cov=src --cov-report=html --cov-report=term-missing"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

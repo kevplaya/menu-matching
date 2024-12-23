@@ -1,0 +1,47 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: menu_matching_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: menu_matching
+      MYSQL_USER: menuuser
+      MYSQL_PASSWORD: menupass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  web:
+    build: .
+    container_name: menu_matching_web
+    restart: always
+    ports:
+      - "8080:8000"   # 호스트 8080 → 컨테이너 8000 (Windows 포트 예약 시 8000 대신 사용)
+    environment:
+      - DJANGO_SECRET_KEY=django-insecure-dev-key-for-docker
+      - DJANGO_DEBUG=True
+      - DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1,0.0.0.0,web
+      - MECAB_DIC_PATH=${MECAB_DIC_PATH:-/usr/local/lib/mecab/dic/mecab-ko-dic}
+      - DB_NAME=menu_matching
+      - DB_USER=root
+      - DB_PASSWORD=rootpassword
+      - DB_HOST=db
+      - DB_PORT=3306
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./data:/app/data
+      - ./models:/app/models
+
+volumes:
+  mysql_data:
