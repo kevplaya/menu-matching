@@ -1,6 +1,31 @@
 from django.db import models
 
 
+class Restaurant(models.Model):
+    name = models.CharField(max_length=200, verbose_name="레스토랑명")
+    address = models.TextField(blank=True, verbose_name="주소")
+    phone = models.CharField(max_length=20, blank=True, verbose_name="전화번호")
+    category = models.CharField(max_length=100, blank=True, verbose_name="카테고리")
+    is_active = models.BooleanField(default=True, verbose_name="활성화 여부")
+
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="생성일시")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="수정일시")
+
+    class Meta:
+        db_table = "restaurants"
+        verbose_name = "레스토랑"
+        verbose_name_plural = "레스토랑 목록"
+        ordering = ["name"]
+        indexes = [
+            models.Index(fields=["name"]),
+            models.Index(fields=["category"]),
+            models.Index(fields=["is_active", "name"]),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
 class StandardMenu(models.Model):
     name = models.CharField(max_length=200, unique=True, verbose_name="표준 메뉴명")
     normalized_name = models.CharField(max_length=200, db_index=True, verbose_name="정규화된 메뉴명")
@@ -48,7 +73,17 @@ class Menu(models.Model):
     )
 
     # 메뉴 정보
-    restaurant_id = models.CharField(max_length=100, db_index=True, verbose_name="음식점 ID")
+    restaurant = models.ForeignKey(
+        Restaurant,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="menus",
+        verbose_name="레스토랑",
+    )
+    restaurant_code = models.CharField(
+        max_length=100, db_index=True, blank=True, verbose_name="음식점 코드"
+    )
     price = models.IntegerField(null=True, blank=True, verbose_name="가격")
     description = models.TextField(blank=True, verbose_name="메뉴 설명")
 
@@ -77,15 +112,15 @@ class Menu(models.Model):
         verbose_name_plural = "메뉴 목록"
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["restaurant_id", "-created_at"]),
+            models.Index(fields=["restaurant_code", "-created_at"]),
             models.Index(fields=["normalized_name"]),
             models.Index(fields=["standard_menu", "-created_at"]),
             models.Index(fields=["is_verified"]),
         ]
-        unique_together = [["restaurant_id", "original_name"]]
+        unique_together = [["restaurant", "original_name"]]
 
     def __str__(self):
-        return f"{self.original_name} ({self.restaurant_id})"
+        return f"{self.original_name} ({self.restaurant.name if self.restaurant else self.restaurant_code})"
 
 
 class MenuMatchingHistory(models.Model):

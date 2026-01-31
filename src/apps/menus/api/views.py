@@ -11,10 +11,41 @@ from apps.menus.api.serializers import (
     MenuMatchResponseSerializer,
     MenuSerializer,
     RematchResultSerializer,
+    RestaurantSerializer,
     StandardMenuSerializer,
 )
-from apps.menus.models import Menu, MenuMatchingHistory, StandardMenu
+from apps.menus.models import Menu, MenuMatchingHistory, Restaurant, StandardMenu
 from apps.menus.services import MenuMatchingService
+
+
+@extend_schema_view(
+    list=extend_schema(summary="레스토랑 목록 조회", tags=["Restaurant"]),
+    retrieve=extend_schema(summary="레스토랑 상세 조회", tags=["Restaurant"]),
+    create=extend_schema(summary="레스토랑 생성", tags=["Restaurant"]),
+    update=extend_schema(summary="레스토랑 수정", tags=["Restaurant"]),
+    partial_update=extend_schema(summary="레스토랑 부분 수정", tags=["Restaurant"]),
+    destroy=extend_schema(summary="레스토랑 삭제", tags=["Restaurant"]),
+)
+class RestaurantViewSet(viewsets.ModelViewSet):
+    queryset = Restaurant.objects.all()
+    serializer_class = RestaurantSerializer
+    filterset_fields = ["category", "is_active"]
+    search_fields = ["name", "address"]
+    ordering_fields = ["name", "created_at"]
+    ordering = ["name"]
+
+    @extend_schema(
+        summary="레스토랑의 메뉴 목록 조회",
+        description="특정 레스토랑의 모든 메뉴를 조회합니다.",
+        tags=["Restaurant"],
+    )
+    @action(detail=True, methods=["get"])
+    def menus(self, request, pk=None):
+        """레스토랑의 메뉴 목록"""
+        restaurant = self.get_object()
+        menus = Menu.objects.filter(restaurant=restaurant).select_related("standard_menu")
+        serializer = MenuSerializer(menus, many=True)
+        return Response(serializer.data)
 
 
 @extend_schema_view(
@@ -77,7 +108,8 @@ class MenuViewSet(viewsets.ModelViewSet):
         service = MenuMatchingService()
         menu = service.create_and_match_menu(
             original_name=serializer.validated_data["original_name"],
-            restaurant_id=serializer.validated_data["restaurant_id"],
+            restaurant=serializer.validated_data.get("restaurant"),
+            restaurant_code=serializer.validated_data.get("restaurant_code", ""),
             price=serializer.validated_data.get("price"),
             description=serializer.validated_data.get("description", ""),
         )
@@ -102,7 +134,8 @@ class MenuViewSet(viewsets.ModelViewSet):
         service = MenuMatchingService()
         menu = service.create_and_match_menu(
             original_name=serializer.validated_data["original_name"],
-            restaurant_id=serializer.validated_data["restaurant_id"],
+            restaurant=serializer.validated_data.get("restaurant"),
+            restaurant_code=serializer.validated_data.get("restaurant_code", ""),
             price=serializer.validated_data.get("price"),
             description=serializer.validated_data.get("description", ""),
         )
@@ -137,7 +170,8 @@ class MenuViewSet(viewsets.ModelViewSet):
         for menu_data in serializer.validated_data["menus"]:
             menu = service.create_and_match_menu(
                 original_name=menu_data["original_name"],
-                restaurant_id=menu_data["restaurant_id"],
+                restaurant=menu_data.get("restaurant"),
+                restaurant_code=menu_data.get("restaurant_code", ""),
                 price=menu_data.get("price"),
                 description=menu_data.get("description", ""),
             )
@@ -188,13 +222,20 @@ class MenuViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"])
     def by_restaurant(self, request):
         """음식점별 메뉴 조회"""
+        restaurant_code = request.query_params.get("restaurant_code")
         restaurant_id = request.query_params.get("restaurant_id")
-        if not restaurant_id:
+
+        if not restaurant_code and not restaurant_id:
             return Response(
-                {"error": "restaurant_id is required"}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "restaurant_code or restaurant_id is required"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        menus = self.queryset.filter(restaurant_id=restaurant_id)
+        if restaurant_id:
+            menus = self.queryset.filter(restaurant_id=restaurant_id)
+        else:
+            menus = self.queryset.filter(restaurant_code=restaurant_code)
+
         serializer = self.get_serializer(menus, many=True)
         return Response(serializer.data)
 

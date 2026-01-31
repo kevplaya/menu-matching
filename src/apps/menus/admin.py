@@ -1,6 +1,15 @@
 from django.contrib import admin
 
-from .models import Menu, MenuMatchingHistory, StandardMenu
+from .models import Menu, MenuMatchingHistory, Restaurant, StandardMenu
+
+
+@admin.register(Restaurant)
+class RestaurantAdmin(admin.ModelAdmin):
+    list_display = ["name", "category", "phone", "is_active", "created_at"]
+    list_filter = ["is_active", "category", "created_at"]
+    search_fields = ["name", "address", "phone"]
+    readonly_fields = ["created_at", "updated_at"]
+    ordering = ["name"]
 
 
 @admin.register(StandardMenu)
@@ -16,7 +25,8 @@ class StandardMenuAdmin(admin.ModelAdmin):
 class MenuAdmin(admin.ModelAdmin):
     list_display = [
         "original_name",
-        "restaurant_id",
+        "restaurant",
+        "restaurant_code",
         "standard_menu",
         "match_method",
         "match_confidence",
@@ -24,9 +34,9 @@ class MenuAdmin(admin.ModelAdmin):
         "created_at",
     ]
     list_filter = ["match_method", "is_verified", "created_at"]
-    search_fields = ["original_name", "normalized_name", "restaurant_id"]
+    search_fields = ["original_name", "normalized_name", "restaurant_code", "restaurant__name"]
     readonly_fields = ["normalized_name", "created_at", "updated_at"]
-    autocomplete_fields = ["standard_menu"]
+    autocomplete_fields = ["standard_menu", "restaurant"]
     ordering = ["-created_at"]
 
 
