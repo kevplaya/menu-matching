@@ -50,25 +50,34 @@
 git clone https://github.com/jihoon-lee/menu-matching.git
 cd menu-matching
 
-# 환경 변수 설정
+# 환경 변수 설정 (선택사항, 기본값 사용 가능)
 cp .env.example .env
 
-# Docker 실행
+# Docker 실행 (마이그레이션 자동 실행)
 docker-compose up -d
 
-# 마이그레이션 (자동 실행되지만 수동 가능)
-docker-compose exec web python manage.py migrate
-
-# 표준 메뉴는 컨테이너 기동 시 자동 생성됩니다. 수동 추가: docker-compose exec web python scripts/create_sample_data.py
-
-# 관리자 계정 생성 (선택)
-docker-compose exec web python manage.py createsuperuser
+# 서비스 준비 대기 (약 10-15초)
+# 표준 메뉴 및 관리자 계정이 자동으로 생성됩니다
 
 # 접속
 # API: http://localhost:8080/api/menus/
-# Admin: http://localhost:8080/admin/
+# Admin: http://localhost:8080/admin/ (admin/admin)
 # Docs: http://localhost:8080/api/docs/
 ```
+
+### 프론트엔드 실행 (선택사항)
+
+```bash
+cd frontend
+npm install
+npm run dev
+# http://localhost:5173 접속
+```
+
+**참고:**
+- 첫 실행 시 자동으로 24개의 표준 메뉴가 생성됩니다
+- 관리자 계정: `admin` / `admin`
+- DB 초기화: `docker-compose down -v && docker-compose up -d`
 
 ## API
 
@@ -160,6 +169,14 @@ docker-compose exec web pytest
 menu-matching/
 ├── .github/
 │   └── workflows/
+├── frontend/              # React 프론트엔드
+│   ├── src/
+│   │   ├── components/   # React 컴포넌트
+│   │   ├── api/          # API 클라이언트
+│   │   ├── App.jsx       # 메인 앱
+│   │   └── main.jsx      # 엔트리 포인트
+│   ├── package.json
+│   └── vite.config.js
 ├── src/
 │   ├── config/
 │   ├── apps/
@@ -210,9 +227,35 @@ menu-matching/
 - Redis 캐싱
 - AWS SNS/SQS 연동
 - FastText 학습 파이프라인
-- 관리자 대시보드
 - Elasticsearch 연동
 - Kubernetes 배포
+
+## 프론트엔드
+
+React + Material-UI로 구현된 웹 인터페이스를 제공합니다.
+
+### 실행 방법
+
+```bash
+# 백엔드 실행
+docker-compose up -d
+
+# 프론트엔드 실행 (별도 터미널)
+cd frontend
+npm install
+npm run dev
+
+# 접속: http://localhost:5173
+```
+
+### 주요 기능
+
+- **레스토랑 관리**: 레스토랑 추가 및 목록 조회
+- **메뉴 관리**: 레스토랑별 메뉴 추가 및 자동/수동 매칭
+- **매칭 결과 확인**: 표준 메뉴별 매칭 현황 및 신뢰도 확인
+- **표준 메뉴 관리**: 표준 메뉴 CRUD 및 통계
+
+자세한 내용은 [frontend/README.md](frontend/README.md)를 참고하세요.
 
 ### 마일스톤
 
@@ -224,3 +267,4 @@ menu-matching/
 | API | 2024-12-22 | DRF 엔드포인트 |
 | CI/CD | 2024-12-22 | GitHub Actions |
 | 리팩토링 | 2024-12-23 | DRF 구조 개선 및 리팩토링 |
+| 프론트엔드 | 2026-01-31 | React + Material-UI 웹 인터페이스 |
