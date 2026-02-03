@@ -162,18 +162,6 @@ curl -X POST http://localhost:8080/api/menus/items/batch_match/ \
 docker-compose exec web pytest
 ```
 
-## Docker에서 스크립트 실행
-
-로컬에서 `python manage.py runserver`가 동작하지 않을 때는 Docker 컨테이너 안에서 실행하세요.
-
-```bash
-# 표준 메뉴 + 샘플 메뉴 생성
-docker-compose exec web bash -c "cd /app/src && python scripts/create_sample_data.py"
-
-# 테스트
-docker-compose exec web pytest
-```
-
 ## FastText 학습
 
 1. 표준 메뉴가 DB에 있어야 합니다. 없으면 위의 샘플 데이터 생성으로 먼저 만드세요.
