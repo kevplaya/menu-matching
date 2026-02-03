@@ -125,7 +125,7 @@ function MatchedMenusView() {
                         <TableCell>
                           <Box display="flex" alignItems="center" gap={0.5}>
                             <RestaurantIcon fontSize="small" color="action" />
-                            {menu.restaurant_detail?.name || menu.restaurant_code}
+                            {menu.restaurant_detail?.name ?? '-'}
                           </Box>
                         </TableCell>
                         <TableCell>{menu.original_name}</TableCell>

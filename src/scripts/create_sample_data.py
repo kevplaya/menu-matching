@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
 django.setup()
 
-from apps.menus.models import Menu, StandardMenu
+from apps.menus.models import Menu, Restaurant, StandardMenu
 from apps.menus.services import MenuMatchingService
 
 
@@ -298,36 +298,38 @@ def create_standard_menus():
 
 def create_sample_menus():
     """샘플 메뉴 생성 및 매칭"""
+    restaurant_codes = ["REST001", "REST002", "REST003", "REST004", "REST005", "REST006", "REST007", "REST008"]
+    restaurants = {}
+    for code in restaurant_codes:
+        restaurants[code], _ = Restaurant.objects.get_or_create(
+            name=f"샘플식당_{code}",
+            defaults={"category": "한식"},
+        )
+
     sample_menus = [
-        # 다양한 형태의 김치찌개
         ("얼큰 김치찌개 1인분", "REST001", 8000),
         ("김치찌개(特)", "REST002", 9000),
         ("돼지고기 김치찌개", "REST003", 8500),
         ("김치찌개 2인분", "REST001", 15000),
-        # 된장찌개
         ("구수한 된장찌개", "REST001", 7000),
         ("된장찌개 [추천]", "REST002", 7500),
-        # 비빔밥
         ("석쇠 비빔밥", "REST004", 9000),
         ("비빔밥 (야채 많이)", "REST004", 9000),
         ("돌솥비빔밥 大", "REST005", 10000),
-        # 삼겹살
         ("한돈 삼겹살 200g", "REST006", 13000),
         ("삼겹살 구이", "REST006", 12000),
-        # 치킨
         ("후라이드 치킨 (순살)", "REST007", 16000),
         ("양념 치킨", "REST007", 17000),
-        # 중식
         ("간짜장", "REST008", 6000),
         ("해물 짬뽕", "REST008", 8000),
         ("탕수육 (소)", "REST008", 15000),
     ]
 
     service = MenuMatchingService()
-    for original_name, restaurant_code, price in sample_menus:
+    for original_name, code, price in sample_menus:
         menu = service.create_and_match_menu(
             original_name=original_name,
-            restaurant_code=restaurant_code,
+            restaurant=restaurants[code],
             price=price,
         )
         status = "MATCHED" if menu.standard_menu else "NOT MATCHED"
