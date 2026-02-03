@@ -167,20 +167,12 @@ docker-compose exec web pytest
 로컬에서 `python manage.py runserver`가 동작하지 않을 때는 Docker 컨테이너 안에서 실행하세요.
 
 ```bash
-# FastText 모델 학습 (학습 데이터 생성 후 models/menu.bin 저장)
-docker-compose exec web python manage.py train_fasttext
-
 # 표준 메뉴 + 샘플 메뉴 생성
-docker-compose exec web python manage.py shell -c "
-from scripts.create_sample_data import create_standard_menus, create_sample_menus, print_statistics
-create_standard_menus(); create_sample_menus(); print_statistics()
-"
+docker-compose exec web bash -c "cd /app/src && python scripts/create_sample_data.py"
 
 # 테스트
 docker-compose exec web pytest
 ```
-
-자주 쓰는 Docker 명령은 [docker-exec-scripts.md](docker-exec-scripts.md)를 참고하세요.
 
 ## FastText 학습
 
