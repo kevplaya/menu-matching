@@ -39,11 +39,11 @@ class TestMenu:
         menu = Menu.objects.create(
             original_name="김치찌개 1인분",
             normalized_name="김치찌개",
-            restaurant_id="REST001",
+            restaurant_code="REST001",
             price=8000,
         )
         assert menu.original_name == "김치찌개 1인분"
-        assert menu.restaurant_id == "REST001"
+        assert menu.restaurant_code == "REST001"
         assert menu.is_verified is False
 
     def test_menu_with_standard_menu(self):
@@ -51,7 +51,7 @@ class TestMenu:
         menu = Menu.objects.create(
             original_name="얼큰 김치찌개",
             normalized_name="김치찌개",
-            restaurant_id="REST002",
+            restaurant_code="REST002",
             standard_menu=standard_menu,
             match_method="mecab",
             match_confidence=0.95,
@@ -60,16 +60,19 @@ class TestMenu:
         assert menu.match_confidence == 0.95
 
     def test_menu_unique_together(self):
+        from apps.menus.models import Restaurant
+
+        restaurant = Restaurant.objects.create(name="테스트 식당")
         Menu.objects.create(
             original_name="김치찌개",
             normalized_name="김치찌개",
-            restaurant_id="REST001",
+            restaurant=restaurant,
         )
         with pytest.raises(Exception):
             Menu.objects.create(
                 original_name="김치찌개",
                 normalized_name="김치찌개",
-                restaurant_id="REST001",
+                restaurant=restaurant,
             )
 
     def test_menu_match_methods(self):
@@ -78,7 +81,7 @@ class TestMenu:
             menu = Menu.objects.create(
                 original_name=f"메뉴_{method}",
                 normalized_name="메뉴",
-                restaurant_id=f"REST_{method}",
+                restaurant_code=f"REST_{method}",
                 match_method=method,
             )
             assert menu.match_method == method
@@ -91,7 +94,7 @@ class TestMenuMatchingHistory:
         menu = Menu.objects.create(
             original_name="얼큰 김치찌개",
             normalized_name="김치찌개",
-            restaurant_id="REST001",
+            restaurant_code="REST001",
         )
         history = MenuMatchingHistory.objects.create(
             menu=menu,
@@ -108,7 +111,7 @@ class TestMenuMatchingHistory:
         menu = Menu.objects.create(
             original_name="구수한 된장찌개",
             normalized_name="된장찌개",
-            restaurant_id="REST002",
+            restaurant_code="REST002",
         )
         MenuMatchingHistory.objects.create(
             menu=menu,
