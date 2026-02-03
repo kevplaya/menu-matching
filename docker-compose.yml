@@ -23,14 +23,14 @@ services:
     build: .
     container_name: menu_matching_web
     restart: always
-    mem_limit: 2g
-    mem_reservation: 1g
+    mem_limit: 4g
+    mem_reservation: 2g
     deploy:
       resources:
         limits:
-          memory: 2G
+          memory: 4G
         reservations:
-          memory: 1G
+          memory: 2G
     ports:
       - "8080:8000"   # 호스트 8080 → 컨테이너 8000 (Windows 포트 예약 시 8000 대신 사용)
     environment:
