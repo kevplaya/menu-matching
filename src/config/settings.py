@@ -8,6 +8,8 @@ load_dotenv()
 
 # Build paths inside the project
 BASE_DIR = Path(__file__).resolve().parent.parent
+# Project root (parent of src). Used for data/, models/ so Docker volume mounts work.
+PROJECT_ROOT = BASE_DIR.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "django-insecure-dev-key-please-change-in-production")
@@ -146,8 +148,8 @@ SPECTACULAR_SETTINGS = {
     "SERVE_INCLUDE_SCHEMA": False,
 }
 
-# FastText model settings
-FASTTEXT_MODEL_PATH = os.getenv("FASTTEXT_MODEL_PATH", str(BASE_DIR / "models" / "menu.bin"))
+# FastText model settings (models/ at project root for Docker volume)
+FASTTEXT_MODEL_PATH = os.getenv("FASTTEXT_MODEL_PATH", str(PROJECT_ROOT / "models" / "menu.bin"))
 
 # Mecab dictionary path (한글 mecab-ko-dic). 비우면 앱에서 후보 경로를 자동 시도.
 MECAB_DIC_PATH = os.getenv("MECAB_DIC_PATH", None)
