@@ -160,7 +160,37 @@ curl -X POST http://localhost:8080/api/menus/items/batch_match/ \
 ```bash
 # Docker 환경에서 테스트
 docker-compose exec web pytest
+```
 
+## Docker에서 스크립트 실행
+
+로컬에서 `python manage.py runserver`가 동작하지 않을 때는 Docker 컨테이너 안에서 실행하세요.
+
+```bash
+# FastText 모델 학습 (학습 데이터 생성 후 models/menu.bin 저장)
+docker-compose exec web python manage.py train_fasttext
+
+# 표준 메뉴 + 샘플 메뉴 생성
+docker-compose exec web python manage.py shell -c "
+from scripts.create_sample_data import create_standard_menus, create_sample_menus, print_statistics
+create_standard_menus(); create_sample_menus(); print_statistics()
+"
+
+# 테스트
+docker-compose exec web pytest
+```
+
+자주 쓰는 Docker 명령은 [docker-exec-scripts.md](docker-exec-scripts.md)를 참고하세요.
+
+## FastText 학습
+
+1. 표준 메뉴가 DB에 있어야 합니다. 없으면 위의 샘플 데이터 생성으로 먼저 만드세요.
+2. 학습 데이터는 `StandardMenu` + `data/sample_menus.csv` 정규화 결과 + 자주 쓰는 메뉴 변형(자장면/짜장면 등)으로 자동 생성됩니다.
+3. 학습 후 `models/menu.bin`이 생성되면 웹 서버를 재시작하면 3단계 매칭(FastText)에서 사용됩니다.
+
+```bash
+docker-compose exec web python manage.py train_fasttext
+docker-compose restart web
 ```
 
 ## 프로젝트 구조
