@@ -90,7 +90,7 @@ class TestMenuAPI:
         url = reverse("menu-list")
         data = {
             "original_name": "김치찌개",
-            "restaurant_id": "REST001",
+            "restaurant_code": "REST001",
             "price": 8000,
             "description": "얼큰한 김치찌개",
         }
@@ -104,7 +104,7 @@ class TestMenuAPI:
         Menu.objects.create(
             original_name="김치찌개",
             normalized_name="김치찌개",
-            restaurant_id="REST001",
+            restaurant_code="REST001",
             standard_menu=standard_menus[0],
         )
 
@@ -118,7 +118,7 @@ class TestMenuAPI:
         url = reverse("menu-match")
         data = {
             "original_name": "김치찌개 1인분",
-            "restaurant_id": "REST002",
+            "restaurant_code": "REST002",
             "price": 7000,
         }
         response = api_client.post(url, data, format="json")
@@ -131,8 +131,8 @@ class TestMenuAPI:
         url = reverse("menu-batch-match")
         data = {
             "menus": [
-                {"original_name": "김치찌개", "restaurant_id": "REST001", "price": 8000},
-                {"original_name": "된장찌개", "restaurant_id": "REST001", "price": 7000},
+                {"original_name": "김치찌개", "restaurant_code": "REST001", "price": 8000},
+                {"original_name": "된장찌개", "restaurant_code": "REST001", "price": 7000},
             ]
         }
         response = api_client.post(url, data, format="json")
@@ -146,16 +146,16 @@ class TestMenuAPI:
         Menu.objects.create(
             original_name="김치찌개",
             normalized_name="김치찌개",
-            restaurant_id="REST001",
+            restaurant_code="REST001",
         )
         Menu.objects.create(
             original_name="된장찌개",
             normalized_name="된장찌개",
-            restaurant_id="REST001",
+            restaurant_code="REST001",
         )
 
         url = reverse("menu-by-restaurant")
-        response = api_client.get(url, {"restaurant_id": "REST001"})
+        response = api_client.get(url, {"restaurant_code": "REST001"})
 
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 2
@@ -164,7 +164,7 @@ class TestMenuAPI:
         Menu.objects.create(
             original_name="알 수 없는 메뉴",
             normalized_name="알 수 없는 메뉴",
-            restaurant_id="REST001",
+            restaurant_code="REST001",
         )
 
         url = reverse("menu-rematch-unmatched")
