@@ -26,7 +26,6 @@ class MenuAdmin(admin.ModelAdmin):
     list_display = [
         "original_name",
         "restaurant",
-        "restaurant_code",
         "standard_menu",
         "match_method",
         "match_confidence",
@@ -34,7 +33,7 @@ class MenuAdmin(admin.ModelAdmin):
         "created_at",
     ]
     list_filter = ["match_method", "is_verified", "created_at"]
-    search_fields = ["original_name", "normalized_name", "restaurant_code", "restaurant__name"]
+    search_fields = ["original_name", "normalized_name", "restaurant__name"]
     readonly_fields = ["normalized_name", "created_at", "updated_at"]
     autocomplete_fields = ["standard_menu", "restaurant"]
     ordering = ["-created_at"]

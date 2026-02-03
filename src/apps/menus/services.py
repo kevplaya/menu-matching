@@ -316,8 +316,7 @@ class MenuMatchingService:
     def create_and_match_menu(
         self,
         original_name: str,
-        restaurant=None,
-        restaurant_code: str = "",
+        restaurant,
         price: Optional[int] = None,
         description: str = "",
     ) -> Menu:
@@ -326,23 +325,19 @@ class MenuMatchingService:
 
         Args:
             original_name: 원본 메뉴명
-            restaurant: Restaurant 객체
-            restaurant_code: 음식점 코드 (레거시)
+            restaurant: Restaurant 객체 (필수)
             price: 가격
             description: 설명
 
         Returns:
             생성된 메뉴 객체
         """
-        # 정규화
         normalized_name = self.normalize_menu_name(original_name)
 
-        # 메뉴 생성
         menu = Menu.objects.create(
             original_name=original_name,
             normalized_name=normalized_name,
             restaurant=restaurant,
-            restaurant_code=restaurant_code,
             price=price,
             description=description,
         )

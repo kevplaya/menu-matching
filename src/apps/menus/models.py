@@ -76,13 +76,8 @@ class Menu(models.Model):
     restaurant = models.ForeignKey(
         Restaurant,
         on_delete=models.CASCADE,
-        null=True,
-        blank=True,
         related_name="menus",
         verbose_name="레스토랑",
-    )
-    restaurant_code = models.CharField(
-        max_length=100, db_index=True, blank=True, verbose_name="음식점 코드"
     )
     price = models.IntegerField(null=True, blank=True, verbose_name="가격")
     description = models.TextField(blank=True, verbose_name="메뉴 설명")
@@ -112,7 +107,7 @@ class Menu(models.Model):
         verbose_name_plural = "메뉴 목록"
         ordering = ["-created_at"]
         indexes = [
-            models.Index(fields=["restaurant_code", "-created_at"]),
+            models.Index(fields=["restaurant", "-created_at"]),
             models.Index(fields=["normalized_name"]),
             models.Index(fields=["standard_menu", "-created_at"]),
             models.Index(fields=["is_verified"]),
@@ -120,7 +115,7 @@ class Menu(models.Model):
         unique_together = [["restaurant", "original_name"]]
 
     def __str__(self):
-        return f"{self.original_name} ({self.restaurant.name if self.restaurant else self.restaurant_code})"
+        return f"{self.original_name} ({self.restaurant.name})"
 
 
 class MenuMatchingHistory(models.Model):

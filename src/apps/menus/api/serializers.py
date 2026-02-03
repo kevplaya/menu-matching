@@ -61,7 +61,6 @@ class MenuSerializer(serializers.ModelSerializer):
             "standard_menu",
             "standard_menu_detail",
             "restaurant",
-            "restaurant_code",
             "restaurant_detail",
             "price",
             "description",
@@ -81,15 +80,20 @@ class MenuSerializer(serializers.ModelSerializer):
         ]
 
     def get_restaurant_detail(self, obj):
-        if obj.restaurant:
-            return {"id": obj.restaurant.id, "name": obj.restaurant.name}
-        return None
+        return {"id": obj.restaurant.id, "name": obj.restaurant.name}
 
 
 class MenuCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Menu
-        fields = ["original_name", "restaurant", "restaurant_code", "price", "description"]
+        fields = ["original_name", "restaurant", "price", "description"]
+
+
+class MenuMatchRequestSerializer(serializers.Serializer):
+    original_name = serializers.CharField(max_length=300, required=True)
+    restaurant = serializers.IntegerField(required=True)
+    price = serializers.IntegerField(required=False, allow_null=True)
+    description = serializers.CharField(required=False, allow_blank=True)
 
 
 class MenuMatchingHistorySerializer(serializers.ModelSerializer):
@@ -110,14 +114,6 @@ class MenuMatchingHistorySerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["id", "created_at"]
-
-
-class MenuMatchRequestSerializer(serializers.Serializer):
-    original_name = serializers.CharField(max_length=300, required=True)
-    restaurant = serializers.IntegerField(required=False, allow_null=True)
-    restaurant_code = serializers.CharField(max_length=100, required=False, allow_blank=True)
-    price = serializers.IntegerField(required=False, allow_null=True)
-    description = serializers.CharField(required=False, allow_blank=True)
 
 
 class MenuMatchResponseSerializer(serializers.Serializer):

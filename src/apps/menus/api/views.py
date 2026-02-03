@@ -103,18 +103,16 @@ class MenuViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
 
-        # 메뉴 매칭 서비스 사용
         service = MenuMatchingService()
         menu = service.create_and_match_menu(
-            original_name=serializer.validated_data["original_name"],
-            restaurant=serializer.validated_data.get("restaurant"),
-            restaurant_code=serializer.validated_data.get("restaurant_code", ""),
-            price=serializer.validated_data.get("price"),
-            description=serializer.validated_data.get("description", ""),
+            original_name=data["original_name"],
+            restaurant=data["restaurant"],
+            price=data.get("price"),
+            description=data.get("description", ""),
         )
 
-        # 응답
         response_serializer = MenuSerializer(menu)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -130,14 +128,15 @@ class MenuViewSet(viewsets.ModelViewSet):
         """메뉴 매칭 수행"""
         serializer = MenuMatchRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        restaurant = Restaurant.objects.get(pk=data["restaurant"])
 
         service = MenuMatchingService()
         menu = service.create_and_match_menu(
-            original_name=serializer.validated_data["original_name"],
-            restaurant=serializer.validated_data.get("restaurant"),
-            restaurant_code=serializer.validated_data.get("restaurant_code", ""),
-            price=serializer.validated_data.get("price"),
-            description=serializer.validated_data.get("description", ""),
+            original_name=data["original_name"],
+            restaurant=restaurant,
+            price=data.get("price"),
+            description=data.get("description", ""),
         )
 
         response_data = {
@@ -168,10 +167,10 @@ class MenuViewSet(viewsets.ModelViewSet):
         results = []
 
         for menu_data in serializer.validated_data["menus"]:
+            restaurant = Restaurant.objects.get(pk=menu_data["restaurant"])
             menu = service.create_and_match_menu(
                 original_name=menu_data["original_name"],
-                restaurant=menu_data.get("restaurant"),
-                restaurant_code=menu_data.get("restaurant_code", ""),
+                restaurant=restaurant,
                 price=menu_data.get("price"),
                 description=menu_data.get("description", ""),
             )
@@ -222,20 +221,13 @@ class MenuViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"])
     def by_restaurant(self, request):
         """음식점별 메뉴 조회"""
-        restaurant_code = request.query_params.get("restaurant_code")
         restaurant_id = request.query_params.get("restaurant_id")
-
-        if not restaurant_code and not restaurant_id:
+        if not restaurant_id:
             return Response(
-                {"error": "restaurant_code or restaurant_id is required"},
+                {"error": "restaurant_id is required"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-        if restaurant_id:
-            menus = self.queryset.filter(restaurant_id=restaurant_id)
-        else:
-            menus = self.queryset.filter(restaurant_code=restaurant_code)
-
+        menus = self.queryset.filter(restaurant_id=restaurant_id)
         serializer = self.get_serializer(menus, many=True)
         return Response(serializer.data)
 
