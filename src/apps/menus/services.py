@@ -172,7 +172,7 @@ class MenuMatchingService:
         return None
 
     def find_standard_menu_by_fasttext(
-        self, normalized_name: str, threshold: float = 0.7
+        self, normalized_name: str, threshold: float = 0.6
     ) -> Optional[Tuple[StandardMenu, float]]:
         """
         FastText를 사용하여 표준 메뉴를 찾습니다.
