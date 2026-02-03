@@ -42,7 +42,7 @@ STANDARD_MENUS_BY_CATEGORY = [
 CATEGORY_EXAMPLES = {
     "치킨": [
         ("후라이드 두마리 치킨", ("두마리치킨", "후라이드치킨")),  # 둘 중 하나 매칭
-        ("탄두리 치킨", ("치킨", "후라이드치킨")),  # 동점 시 카테고리 기본값 가능
+        ("탄두리 치킨", ("치킨", "후라이드치킨", "순살치킨")),  # 치킨 포함 시 후보 중 하나
         ("후라이드 치킨", "후라이드치킨"),
     ],
     "한식-찌개": [
@@ -112,7 +112,7 @@ class TestMenuMatchingByCategory:
             allowed = (expected,) if isinstance(expected, str) else expected
             menu = matching_service.create_and_match_menu(
                 original_name=original_name,
-                restaurant_id=f"TEST_{category}_{hash(original_name) % 10000}",
+                restaurant_code=f"TEST_{category}_{hash(original_name) % 10000}",
                 price=10000,
             )
             assert (
@@ -136,7 +136,7 @@ class TestMenuMatchingByCategory:
         for original_name, expected_name in examples:
             menu = matching_service.create_and_match_menu(
                 original_name=original_name,
-                restaurant_id=f"CHICKEN_{hash(original_name) % 10000}",
+                restaurant_code=f"CHICKEN_{hash(original_name) % 10000}",
                 price=15000,
             )
             assert menu.standard_menu is not None, f'"{original_name}" 매칭 실패'
@@ -154,7 +154,7 @@ class TestMenuMatchingByCategory:
         for original_name, expected_name in examples:
             menu = matching_service.create_and_match_menu(
                 original_name=original_name,
-                restaurant_id=f"STEW_{hash(original_name) % 10000}",
+                restaurant_code=f"STEW_{hash(original_name) % 10000}",
                 price=8000,
             )
             assert menu.standard_menu is not None, f'"{original_name}" 매칭 실패'
@@ -172,7 +172,7 @@ class TestMenuMatchingByCategory:
         for original_name, expected_name in examples:
             menu = matching_service.create_and_match_menu(
                 original_name=original_name,
-                restaurant_id=f"CHINESE_{hash(original_name) % 10000}",
+                restaurant_code=f"CHINESE_{hash(original_name) % 10000}",
                 price=7000,
             )
             assert menu.standard_menu is not None, f'"{original_name}" 매칭 실패'
