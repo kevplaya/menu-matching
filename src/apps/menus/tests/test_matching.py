@@ -7,7 +7,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from apps.menus.models import StandardMenu
+from apps.menus.models import Restaurant, StandardMenu
 from apps.menus.services import MenuMatchingService
 
 # create_sample_data.py와 동일한 표준 메뉴 목록
@@ -87,6 +87,11 @@ def _mock_get_noun_tokens(text: str, min_length: int = 2):
 
 
 @pytest.fixture
+def test_restaurant(db):
+    return Restaurant.objects.create(name="테스트식당")
+
+
+@pytest.fixture
 def matching_service(all_standard_menus):
     """매칭 서비스. MeCab 없을 때 mock 형태소(공백 분리)로 동작하도록 주입."""
     service = MenuMatchingService()
@@ -106,13 +111,13 @@ class TestMenuMatchingByCategory:
         list(CATEGORY_EXAMPLES.items()),
         ids=list(CATEGORY_EXAMPLES.keys()),
     )
-    def test_category_matching(self, matching_service, all_standard_menus, category, examples):
+    def test_category_matching(self, matching_service, all_standard_menus, test_restaurant, category, examples):
         """각 카테고리별 예시 3개씩 매칭 검증."""
         for original_name, expected in examples:
             allowed = (expected,) if isinstance(expected, str) else expected
             menu = matching_service.create_and_match_menu(
                 original_name=original_name,
-                restaurant_code=f"TEST_{category}_{hash(original_name) % 10000}",
+                restaurant=test_restaurant,
                 price=10000,
             )
             assert (
@@ -126,7 +131,7 @@ class TestMenuMatchingByCategory:
                 f"기대 {allowed} 중 하나, 실제 {menu.standard_menu.name}"
             )
 
-    def test_chicken_spaced_and_variants(self, matching_service, all_standard_menus):
+    def test_chicken_spaced_and_variants(self, matching_service, all_standard_menus, test_restaurant):
         """치킨: 띄어쓰기·숫자 포함 입력이 후라이드치킨/두마리치킨 등으로 매칭."""
         examples = [
             ("후라이드 치킨", "후라이드치킨"),
@@ -136,7 +141,7 @@ class TestMenuMatchingByCategory:
         for original_name, expected_name in examples:
             menu = matching_service.create_and_match_menu(
                 original_name=original_name,
-                restaurant_code=f"CHICKEN_{hash(original_name) % 10000}",
+                restaurant=test_restaurant,
                 price=15000,
             )
             assert menu.standard_menu is not None, f'"{original_name}" 매칭 실패'
@@ -144,7 +149,7 @@ class TestMenuMatchingByCategory:
                 menu.standard_menu.name == expected_name
             ), f'"{original_name}" → 기대 {expected_name}, 실제 {menu.standard_menu.name}'
 
-    def test_han_sik_stew_spaced(self, matching_service, all_standard_menus):
+    def test_han_sik_stew_spaced(self, matching_service, all_standard_menus, test_restaurant):
         """한식-찌개: 띄어쓰기·괄호가 있어도 매칭."""
         examples = [
             ("김치 찌개", "김치찌개"),
@@ -154,7 +159,7 @@ class TestMenuMatchingByCategory:
         for original_name, expected_name in examples:
             menu = matching_service.create_and_match_menu(
                 original_name=original_name,
-                restaurant_code=f"STEW_{hash(original_name) % 10000}",
+                restaurant=test_restaurant,
                 price=8000,
             )
             assert menu.standard_menu is not None, f'"{original_name}" 매칭 실패'
@@ -162,7 +167,7 @@ class TestMenuMatchingByCategory:
                 menu.standard_menu.name == expected_name
             ), f'"{original_name}" → 기대 {expected_name}, 실제 {menu.standard_menu.name}'
 
-    def test_chinese_food_variants(self, matching_service, all_standard_menus):
+    def test_chinese_food_variants(self, matching_service, all_standard_menus, test_restaurant):
         """중식: 간짜장·해물짬뽕 등 변형이 표준 메뉴로 매칭."""
         examples = [
             ("짜장면", "짜장면"),
@@ -172,7 +177,7 @@ class TestMenuMatchingByCategory:
         for original_name, expected_name in examples:
             menu = matching_service.create_and_match_menu(
                 original_name=original_name,
-                restaurant_code=f"CHINESE_{hash(original_name) % 10000}",
+                restaurant=test_restaurant,
                 price=7000,
             )
             assert menu.standard_menu is not None, f'"{original_name}" 매칭 실패'

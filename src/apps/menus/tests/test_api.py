@@ -4,12 +4,19 @@ import pytest
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.menus.models import Menu, StandardMenu
+from apps.menus.models import Menu, Restaurant, StandardMenu
 
 
 @pytest.fixture
 def api_client():
     return APIClient()
+
+
+@pytest.fixture
+def restaurants(db):
+    r1 = Restaurant.objects.create(name="테스트식당1")
+    r2 = Restaurant.objects.create(name="테스트식당2")
+    return [r1, r2]
 
 
 @pytest.fixture
@@ -86,11 +93,11 @@ class TestStandardMenuAPI:
 
 @pytest.mark.django_db
 class TestMenuAPI:
-    def test_create_menu(self, api_client, standard_menus):
+    def test_create_menu(self, api_client, standard_menus, restaurants):
         url = reverse("menu-list")
         data = {
             "original_name": "김치찌개",
-            "restaurant_code": "REST001",
+            "restaurant": restaurants[0].id,
             "price": 8000,
             "description": "얼큰한 김치찌개",
         }
@@ -100,11 +107,11 @@ class TestMenuAPI:
         assert response.data["original_name"] == "김치찌개"
         assert response.data["standard_menu"] is not None
 
-    def test_list_menus(self, api_client, standard_menus):
+    def test_list_menus(self, api_client, standard_menus, restaurants):
         Menu.objects.create(
             original_name="김치찌개",
             normalized_name="김치찌개",
-            restaurant_code="REST001",
+            restaurant=restaurants[0],
             standard_menu=standard_menus[0],
         )
 
@@ -114,11 +121,11 @@ class TestMenuAPI:
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data["results"]) == 1
 
-    def test_match_menu(self, api_client, standard_menus):
+    def test_match_menu(self, api_client, standard_menus, restaurants):
         url = reverse("menu-match")
         data = {
             "original_name": "김치찌개 1인분",
-            "restaurant_code": "REST002",
+            "restaurant": restaurants[1].id,
             "price": 7000,
         }
         response = api_client.post(url, data, format="json")
@@ -127,12 +134,12 @@ class TestMenuAPI:
         assert response.data["matched"] is True
         assert response.data["standard_menu"] is not None
 
-    def test_batch_match_menus(self, api_client, standard_menus):
+    def test_batch_match_menus(self, api_client, standard_menus, restaurants):
         url = reverse("menu-batch-match")
         data = {
             "menus": [
-                {"original_name": "김치찌개", "restaurant_code": "REST001", "price": 8000},
-                {"original_name": "된장찌개", "restaurant_code": "REST001", "price": 7000},
+                {"original_name": "김치찌개", "restaurant": restaurants[0].id, "price": 8000},
+                {"original_name": "된장찌개", "restaurant": restaurants[0].id, "price": 7000},
             ]
         }
         response = api_client.post(url, data, format="json")
@@ -142,29 +149,29 @@ class TestMenuAPI:
         assert response.data[0]["matched"] is True
         assert response.data[1]["matched"] is True
 
-    def test_by_restaurant(self, api_client, standard_menus):
+    def test_by_restaurant(self, api_client, standard_menus, restaurants):
         Menu.objects.create(
             original_name="김치찌개",
             normalized_name="김치찌개",
-            restaurant_code="REST001",
+            restaurant=restaurants[0],
         )
         Menu.objects.create(
             original_name="된장찌개",
             normalized_name="된장찌개",
-            restaurant_code="REST001",
+            restaurant=restaurants[0],
         )
 
         url = reverse("menu-by-restaurant")
-        response = api_client.get(url, {"restaurant_code": "REST001"})
+        response = api_client.get(url, {"restaurant_id": restaurants[0].id})
 
         assert response.status_code == status.HTTP_200_OK
         assert len(response.data) == 2
 
-    def test_rematch_unmatched(self, api_client, standard_menus):
+    def test_rematch_unmatched(self, api_client, standard_menus, restaurants):
         Menu.objects.create(
             original_name="알 수 없는 메뉴",
             normalized_name="알 수 없는 메뉴",
-            restaurant_code="REST001",
+            restaurant=restaurants[0],
         )
 
         url = reverse("menu-rematch-unmatched")

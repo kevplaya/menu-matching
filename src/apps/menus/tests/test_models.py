@@ -1,6 +1,6 @@
 import pytest
 
-from apps.menus.models import Menu, MenuMatchingHistory, StandardMenu
+from apps.menus.models import Menu, MenuMatchingHistory, Restaurant, StandardMenu
 
 
 @pytest.mark.django_db
@@ -36,22 +36,24 @@ class TestStandardMenu:
 @pytest.mark.django_db
 class TestMenu:
     def test_create_menu(self):
+        restaurant = Restaurant.objects.create(name="테스트식당")
         menu = Menu.objects.create(
             original_name="김치찌개 1인분",
             normalized_name="김치찌개",
-            restaurant_code="REST001",
+            restaurant=restaurant,
             price=8000,
         )
         assert menu.original_name == "김치찌개 1인분"
-        assert menu.restaurant_code == "REST001"
+        assert menu.restaurant == restaurant
         assert menu.is_verified is False
 
     def test_menu_with_standard_menu(self):
+        restaurant = Restaurant.objects.create(name="테스트식당2")
         standard_menu = StandardMenu.objects.create(name="김치찌개", normalized_name="김치찌개")
         menu = Menu.objects.create(
             original_name="얼큰 김치찌개",
             normalized_name="김치찌개",
-            restaurant_code="REST002",
+            restaurant=restaurant,
             standard_menu=standard_menu,
             match_method="mecab",
             match_confidence=0.95,
@@ -60,8 +62,6 @@ class TestMenu:
         assert menu.match_confidence == 0.95
 
     def test_menu_unique_together(self):
-        from apps.menus.models import Restaurant
-
         restaurant = Restaurant.objects.create(name="테스트 식당")
         Menu.objects.create(
             original_name="김치찌개",
@@ -76,12 +76,13 @@ class TestMenu:
             )
 
     def test_menu_match_methods(self):
+        restaurant = Restaurant.objects.create(name="테스트식당")
         match_methods = ["exact", "mecab", "fasttext", "manual"]
         for method in match_methods:
             menu = Menu.objects.create(
                 original_name=f"메뉴_{method}",
                 normalized_name="메뉴",
-                restaurant_code=f"REST_{method}",
+                restaurant=restaurant,
                 match_method=method,
             )
             assert menu.match_method == method
@@ -90,11 +91,12 @@ class TestMenu:
 @pytest.mark.django_db
 class TestMenuMatchingHistory:
     def test_create_matching_history(self):
+        restaurant = Restaurant.objects.create(name="테스트식당")
         standard_menu = StandardMenu.objects.create(name="김치찌개", normalized_name="김치찌개")
         menu = Menu.objects.create(
             original_name="얼큰 김치찌개",
             normalized_name="김치찌개",
-            restaurant_code="REST001",
+            restaurant=restaurant,
         )
         history = MenuMatchingHistory.objects.create(
             menu=menu,
@@ -107,11 +109,12 @@ class TestMenuMatchingHistory:
         assert history.matched_tokens == ["김치", "찌개"]
 
     def test_matching_history_relationships(self):
+        restaurant = Restaurant.objects.create(name="테스트식당2")
         standard_menu = StandardMenu.objects.create(name="된장찌개", normalized_name="된장찌개")
         menu = Menu.objects.create(
             original_name="구수한 된장찌개",
             normalized_name="된장찌개",
-            restaurant_code="REST002",
+            restaurant=restaurant,
         )
         MenuMatchingHistory.objects.create(
             menu=menu,
